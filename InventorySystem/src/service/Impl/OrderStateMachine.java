@@ -4,7 +4,7 @@ package service.Impl;
 import exception.EcommerceException;
 import model.ErrorCode;
 import model.Order;
-import model.OrderState;
+import model.OrderStatus;
 import repository.OrderRepository;
 import service.BuyerService;
 import service.PincodeServiceabilityService;
@@ -12,7 +12,7 @@ import service.ProductService;
 import utils.ErrorCodeMap;
 
 public class OrderStateMachine {
-    private OrderState currentState;
+    private OrderStatus currentState;
     private OrderRepository orderRepository;
     private ProductService productService;
     private PincodeServiceabilityService pincodeServiceabilityService;
@@ -24,11 +24,11 @@ public class OrderStateMachine {
         this.productService = productService;
         this.pincodeServiceabilityService = pincodeServiceabilityService;
         this.buyerService = buyerService;
-        this.currentState = OrderState.CHECK_PINCODE;
+        this.currentState = OrderStatus.CHECK_PINCODE;
     }
 
     public String processOrder(Order order) throws EcommerceException {
-        while (currentState != OrderState.ORDER_CREATED && currentState != OrderState.ORDER_CREATION_FAILED) {
+        while (currentState != OrderStatus.ORDER_CREATED && currentState != OrderStatus.ORDER_CREATION_FAILED) {
             switch (currentState) {
                 case CHECK_PINCODE:
                     checkPincode(order);
@@ -43,7 +43,7 @@ public class OrderStateMachine {
                     throw new IllegalStateException("Unexpected state: " + currentState);
             }
         }
-        if (currentState == OrderState.ORDER_CREATED) {
+        if (currentState == OrderStatus.ORDER_CREATED) {
             return order.getOrderId();
         } else {
             throw new EcommerceException(
@@ -60,30 +60,32 @@ public class OrderStateMachine {
                 sourcePinCode,
                 destinationPinCode, order.getPaymentMode()
         )) {
-            currentState = OrderState.ORDER_CREATION_FAILED;
+            currentState = OrderStatus.ORDER_CREATION_FAILED;
+            throw new EcommerceException(
+                    model.ErrorCode.PIN_CODE_UNSERVICEABLE, ErrorCodeMap.errorCodeStringHashMap.get(model.ErrorCode.PIN_CODE_UNSERVICEABLE));
         } else {
-            currentState = OrderState.CHECK_INVENTORY;
+            currentState = OrderStatus.CHECK_INVENTORY;
         }
     }
 
     private void checkInventory(Order order) throws EcommerceException {
         if (productService.checkInventory(order.getQuantity(), order.getProductId())) {
-            currentState = OrderState.CREATE_ORDER;
+            currentState = OrderStatus.CREATE_ORDER;
         } else {
-            currentState = OrderState.ORDER_CREATION_FAILED;
+            currentState = OrderStatus.ORDER_CREATION_FAILED;
         }
     }
 
     private void createOrder(Order order) throws EcommerceException {
         Order createdOrder = orderRepository.createOrder(order);
-        currentState = OrderState.ORDER_CREATED;
+        currentState = OrderStatus.ORDER_CREATED;
     }
 
-    public OrderState getCurrentState() {
+    public OrderStatus getCurrentState() {
         return currentState;
     }
 
-    public void setCurrentState(OrderState currentState) {
+    public void setCurrentState(OrderStatus currentState) {
         this.currentState = currentState;
     }
 }

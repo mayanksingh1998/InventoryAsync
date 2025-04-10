@@ -4,6 +4,9 @@ import exception.EcommerceException;
 import model.Order;
 import repository.OrderRepository;
 import service.BuyerService;
+import service.Impl.state.CheckInventoryState;
+import service.Impl.state.CheckPincodeState;
+import service.Impl.state.OrderContext;
 import service.OrderService;
 import service.PincodeServiceabilityService;
 import service.ProductService;
@@ -62,6 +65,14 @@ public class OrderServiceImpl implements OrderService {
         OrderStateMachine orderStateMachine = new OrderStateMachine(orderRepository, productService, pincodeServiceabilityService, buyerService);
         return orderStateMachine.processOrder(order);
     }
+
+//    @Override
+//    public String addOrder(Order order) throws EcommerceException {
+//        OrderContext orderContext = new OrderContext(orderRepository, productService, pincodeServiceabilityService, buyerService);
+//        orderContext.setState(new CheckPincodeState());
+//        orderContext.processOrder(order);
+//        return order.getOrderId();
+//    }
 
     @Override
     public Order getOrder(String orderId) throws EcommerceException {

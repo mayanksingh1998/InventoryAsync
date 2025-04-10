@@ -76,6 +76,7 @@ public class Main {
             try {
                 String order1Id = orderService.addOrder(order1);
                 System.out.println("Order1 Placed Sucessfull "+ order1Id);
+//                System.out.println("3333      "+ product1Id.);
 
                 String order3Id = orderService.addOrder(order3);
                 System.out.println("Order3 Placed Sucessfull "+ order3Id);
